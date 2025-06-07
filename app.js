@@ -107,7 +107,31 @@ function logout() {
   auth.signOut().then(() => location.reload());
 }
 
-function envoyerReservation() {
+async function initierPaiement() {
+  try {
+    // TODO: intégrer ici l'appel à l'API Mobile Money (MTN ou Airtel)
+    // Simulation du paiement pour la démo
+    const confirme = confirm('Confirmer le paiement Mobile Money ?');
+    if (!confirme) return { valide: false };
+
+    // Attente simulée de validation
+    await new Promise(res => setTimeout(res, 1000));
+    return { valide: true, id: 'demo-id' };
+  } catch (e) {
+    showError('Paiement échoué : ' + e.message);
+    return { valide: false };
+  }
+}
+
+function envoyerWhatsApp(nom, depart, arrivee, heure, commentaires, lat, lon) {
+  const telSociete = '242050787624';
+  const googleMapsLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+  const message = `Réservation Taxi:\n- Nom: ${nom}\n- Départ: ${depart}\n- Arrivée: ${arrivee}\n- Heure: ${heure}\n- Commentaires: ${commentaires}\n- Itinéraire Google Maps: ${googleMapsLink}`;
+  const url = `https://wa.me/${telSociete}?text=${encodeURIComponent(message)}`;
+  window.location.href = url;
+}
+
+async function envoyerReservation() {
   const depart = document.getElementById('depart').value.trim();
   const arrivee = document.getElementById('arrivee').value.trim();
   const heure = document.getElementById('heure').value;
@@ -120,15 +144,18 @@ function envoyerReservation() {
 
   if (!confirm('Envoyer la réservation ?')) return;
 
-  navigator.geolocation.getCurrentPosition(pos => {
+  navigator.geolocation.getCurrentPosition(async pos => {
     const lat = pos.coords.latitude.toFixed(6);
     const lon = pos.coords.longitude.toFixed(6);
-    const telSociete = '242050787624';
-    const googleMapsLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-    const message = `Réservation Taxi:\n- Nom: ${nom}\n- Départ: ${depart}\n- Arrivée: ${arrivee}\n- Heure: ${heure}\n- Commentaires: ${commentaires}\n- Itinéraire Google Maps: ${googleMapsLink}`;
-    const url = `https://wa.me/${telSociete}?text=${encodeURIComponent(message)}`;
-    window.location.href = url;
-    db.collection('reservations').add({ nom, depart, arrivee, heure, commentaires, latitude: lat, longitude: lon, date: new Date() });
+
+    const paiement = await initierPaiement();
+    if (!paiement.valide) {
+      showError('Paiement non validé.');
+      return;
+    }
+
+    envoyerWhatsApp(nom, depart, arrivee, heure, commentaires, lat, lon);
+    db.collection('reservations').add({ nom, depart, arrivee, heure, commentaires, latitude: lat, longitude: lon, date: new Date(), paiementId: paiement.id, paiementStatut: 'valide' });
     lancerTimer();
   }, err => {
     showError('Erreur GPS : ' + err.message);
