@@ -3,12 +3,20 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open('pnr-cache').then(cache => {
       return cache.addAll([
-        'https://pnrtaxi.com/resataxi/',
-        'https://pnrtaxi.com/resataxi/index.html',
-        'https://pnrtaxi.com/resataxi/manifest.json',
-        'https://pnrtaxi.com/resataxi/icon-192.png',
-        'https://pnrtaxi.com/resataxi/icon-512.png'
+        './',
+        './index.html',
+        './manifest.json',
+        './icon-192.png',
+        './icon-512.png'
       ]);
+    })
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
     })
   );
 });
