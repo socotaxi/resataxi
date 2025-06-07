@@ -123,7 +123,7 @@ function envoyerReservation() {
   navigator.geolocation.getCurrentPosition(pos => {
     const lat = pos.coords.latitude.toFixed(6);
     const lon = pos.coords.longitude.toFixed(6);
-    const telSociete = '242050787624';
+    const telSociete = window.config.telSociete;
     const googleMapsLink = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
     const message = `Réservation Taxi:\n- Nom: ${nom}\n- Départ: ${depart}\n- Arrivée: ${arrivee}\n- Heure: ${heure}\n- Commentaires: ${commentaires}\n- Itinéraire Google Maps: ${googleMapsLink}`;
     const url = `https://wa.me/${telSociete}?text=${encodeURIComponent(message)}`;
